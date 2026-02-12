@@ -23,11 +23,16 @@
             transition: opacity 0.8s ease;
         }
         .brand { font-family: 'Dancing Script', cursive; font-size: 4rem; color: #ff0055; margin-bottom: 20px; }
-        
+        .heart-box { position: relative; width: 80px; height: 80px; }
+        .h-icon { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; }
+        .h-gray { color: #333; }
+        .h-pink { color: #ff0055; overflow: hidden; height: 0%; position: absolute; bottom: 0; animation: fillUp 2.5s ease-in-out forwards; filter: drop-shadow(0 0 10px #ff0055); }
+        .h-pink .svg-heart { position: absolute; bottom: 0; height: 80px; width: 80px; }
+
         .story-container { width: 100vw; height: 100dvh; overflow-y: scroll; scroll-snap-type: y mandatory; scroll-behavior: smooth; -webkit-overflow-scrolling: touch; }
         .slide { width: 100vw; height: 100dvh; scroll-snap-align: start; scroll-snap-stop: always; position: relative; overflow: hidden; background: #000; display: flex; justify-content: center; align-items: center; }
         
-        .slide-media { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity 0.4s ease-in; z-index: 1; }
+        .slide-media { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity 0.5s; }
         .slide-media.loaded { opacity: 1; }
 
         .overlay-gradient { position: absolute; bottom: 0; left: 0; width: 100%; height: 50%; background: linear-gradient(to top, rgba(0,0,0,0.9), transparent); z-index: 2; pointer-events: none; }
@@ -41,7 +46,9 @@
         .floating-heart.liked { color: #ff0055; animation: pop 0.3s forwards; }
 
         .final-slide { background: linear-gradient(135deg, #ff758c, #ff7eb3); display: flex; justify-content: center; align-items: center; }
-        .message-box { background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(10px); width: 85%; padding: 30px 20px; border-radius: 20px; text-align: center; color: #333; z-index: 10; }
+        .message-box { background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(10px); width: 85%; padding: 30px 20px; border-radius: 20px; text-align: center; color: #333; }
+        .final-message { font-size: 1.1rem; line-height: 1.7; font-weight: 600; }
+        .signature { display: block; margin-top: 15px; color: #ff0055; font-size: 1.3rem; font-weight: 800; }
         .btn-restart { display: block; margin: 20px auto 10px; padding: 10px 25px; background: #fff; color: #ff0055; border: 2px solid #ff0055; border-radius: 50px; font-weight: 700; text-decoration: none; }
         .btn-site { display: block; margin: 0 auto; padding: 10px 25px; background: #ff0055; color: #fff; border-radius: 50px; font-weight: 700; text-decoration: none; }
 
@@ -55,14 +62,13 @@
         <symbol id="icon-heart" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></symbol>
     </svg>
 
-    <div id="loader"><div class="brand">Memorito</div></div>
+    <div id="loader"><div class="brand">Memorito</div><div class="heart-box"><div class="h-icon h-gray"><svg class="svg-heart"><use href="#icon-heart"></use></svg></div><div class="h-icon h-pink"><svg class="svg-heart"><use href="#icon-heart"></use></svg></div></div></div>
 
     <div class="story-container" id="stories"></div>
 
     <script>
         const totalSlides = 82;
         const container = document.getElementById('stories');
-        let isGlobalMuted = true;
 
         for (let i = 1; i <= totalSlides; i++) {
             const div = document.createElement('div');
@@ -86,91 +92,56 @@
         final.className = 'slide final-slide';
         final.id = 'final-slide';
         final.innerHTML = `<div class="message-box">
-            <p style="font-size:1.1rem; line-height:1.7; font-weight:600;">ربنا يخليكي ليا يا ميمو يا حبيبتي يارب والعمر كلو مع بعض ومشوفش فيكي اي وحش وافضل اشوفك مبسوطه ونفضل نرخم علي بعض كدا انا عاوز اقضي الباقي من عمري كلو معاكي هتفضلي حبيبتي لحد اخر يوم فعمري هتفضلي اختياري الاول و الاخير بحبك اووووي يا ميمو ربنا ميحرمني منك ابدا يا اجمل رزق من ربنا يا احلي حاجه حصلتلي فحياتي بحبك اوي يا ميمو اوي اوي خليكي فاكرة إني هفضل جنبك العمر كلو ومش هزهق ولا هبعد ولا هتغير وهفضل أحبك ديماً وتفضلي دلوعتي بحبك أوي. <br><b style="color:#ff0055; font-size:1.3rem;">(حمودك)</b></p>
-            <a href="#" onclick="location.reload();" class="btn-restart">العودة لأول memory</a>
+            <p class="final-message">ربنا يخليكي ليا يا ميمو يا حبيبتي يارب والعمر كلو مع بعض ومشوفش فيكي اي وحش وافضل اشوفك مبسوطه ونفضل نرخم علي بعض كدا انا عاوز اقضي الباقي من عمري كلو معاكي هتفضلي حبيبتي لحد اخر يوم فعمري هتفضلي اختياري الاول و الاخير بحبك اووووي يا ميمو ربنا ميحرمني منك ابدا يا اجمل رزق من ربنا يا احلي حاجه حصلتلي فحياتي بحبك اوي يا ميمو اوي اوي خليكي فاكرة إني هفضل جنبك العمر كلو ومش هزهق ولا هبعد ولا هتغير وهفضل أحبك ديماً وتفضلي دلوعتي بحبك أوي. <span class="signature">(حمودك)</span></p>
+            <a href="#" onclick="window.scrollTo(0,0); return false;" class="btn-restart">العودة لأول memory</a>
             <a href="https://memorito.netlify.app/" class="btn-site">العودة للموقع</a>
         </div>`;
         container.appendChild(final);
 
-        // تفعيل الصوت من أول لمسة
-        document.addEventListener('touchstart', () => {
-            isGlobalMuted = false;
-            const v = document.querySelector('.slide.active video');
-            if (v) { v.muted = false; v.play().catch(()=>{}); }
-        }, { once: false });
-
-        window.onload = () => setTimeout(() => { 
-            document.getElementById('loader').style.opacity = '0'; 
-            setTimeout(() => document.getElementById('loader').style.display = 'none', 500); 
-        }, 2000);
+        window.onload = () => setTimeout(() => { document.getElementById('loader').style.opacity = '0'; setTimeout(() => document.getElementById('loader').style.display = 'none', 800); }, 2500);
 
         function toggleLike(btn) { btn.classList.toggle('liked'); }
 
         const observer = new IntersectionObserver((entries) => {
             entries.forEach(entry => {
-                const id = parseInt(entry.target.id.split('-')[1]);
-                const video = entry.target.querySelector('video');
-
                 if (entry.isIntersecting) {
                     entry.target.classList.add('active');
-                    loadMedia(id); 
-                    // تحميل الفيديو اللي جاي واللي فات فوراً
-                    if (id < totalSlides) loadMedia(id + 1);
-                    if (id > 1) loadMedia(id - 1);
-
-                    if (video) {
-                        video.muted = isGlobalMuted;
-                        // محاولة تشغيل الفيديو 3 مرات لضمان عدم التجمد
-                        let playAttempts = 0;
-                        const forcePlay = () => {
-                            video.play().catch(() => {
-                                if (playAttempts < 3) {
-                                    playAttempts++;
-                                    setTimeout(forcePlay, 200);
-                                }
-                            });
-                        };
-                        forcePlay();
-                    }
+                    const id = entry.target.id.split('-')[1];
+                    if (id && id !== 'slide') loadMedia(id);
+                    const v = entry.target.querySelector('video');
+                    if (v) v.play().catch(() => {});
                 } else {
                     entry.target.classList.remove('active');
-                    if (video) {
-                        video.pause();
-                        // مسح التخزين المؤقت للفيديو اللي خرج من الشاشة عشان ميهنجش الأيفون
-                        video.currentTime = 0;
-                    }
+                    const v = entry.target.querySelector('video');
+                    if (v) { v.pause(); v.currentTime = 0; }
                 }
             });
-        }, { threshold: 0.5 });
+        }, { threshold: 0.6 });
 
         function loadMedia(id) {
-            if (!id || id > totalSlides) return;
             const box = document.getElementById(`media-container-${id}`);
             if (!box || box.innerHTML !== "") return;
             
+            // نجرب الفيديو أولاً
             const v = document.createElement('video');
             v.className = 'slide-media';
-            v.loop = true; 
-            v.muted = true; // دايماً يبدأ صامت عشان الأيفون ميحظرش التحميل
-            v.setAttribute('playsinline', '');
-            v.setAttribute('preload', 'auto');
+            v.loop = true; v.muted = true; v.setAttribute('playsinline', '');
             v.src = `images/${id}.mp4`;
             
-            v.onloadeddata = () => v.classList.add('loaded');
-            
+            v.oncanplay = () => v.classList.add('loaded');
             v.onerror = () => {
                 v.remove();
                 const img = document.createElement('img');
                 img.className = 'slide-media';
-                img.src = `images/${id}.jpg`;
+                img.src = `images/${id}.jpg`; // نجرب jpg
                 img.onload = () => img.classList.add('loaded');
-                img.onerror = () => { 
-                    img.src = `images/${id}.JPG`; 
-                    img.onload = () => img.classList.add('loaded'); 
-                };
+                img.onerror = () => { img.src = `images/${id}.JPG`; img.onload = () => img.classList.add('loaded'); }; // نجرب JPG
                 box.appendChild(img);
             };
             box.appendChild(v);
+            
+            const slide = box.closest('.slide');
+            slide.onclick = () => { if(v) v.muted = false; };
         }
 
         document.querySelectorAll('.slide').forEach(s => observer.observe(s));
