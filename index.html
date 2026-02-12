@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
@@ -19,15 +19,12 @@
             font-family: 'Cairo', sans-serif; 
             overflow: hidden; 
             color: #fff; 
-            /* الطول الديناميكي للأيفون */
-            height: 100vh; 
-            height: 100dvh;
+            height: 100vh; height: 100dvh; /* للأيفون الحديث */
         }
 
-        /* --- أيقونة القلب الموحدة (SVG) --- */
         .svg-heart { width: 100%; height: 100%; fill: currentColor; }
 
-        /* --- اللودر (تم تعديله للأيفون) --- */
+        /* --- اللودر --- */
         #loader {
             position: fixed; inset: 0; background: #000; z-index: 9999;
             display: flex; flex-direction: column; justify-content: center; align-items: center;
@@ -36,7 +33,6 @@
         .brand { font-family: 'Dancing Script', cursive; font-size: 4rem; color: #ff0055; margin-bottom: 20px; }
         
         .heart-box { position: relative; width: 80px; height: 80px; }
-        
         .h-icon { 
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             display: flex; justify-content: center; align-items: center;
@@ -49,23 +45,24 @@
             animation: fillUp 2.5s ease-in-out forwards;
             filter: drop-shadow(0 0 10px #ff0055);
         }
-        /* تعديل جوهري لقص القلب بشكل صحيح */
-        .h-pink .svg-heart {
-            position: absolute; bottom: 0; left: 0;
-            height: 80px; width: 80px; 
-        }
+        .h-pink .svg-heart { position: absolute; bottom: 0; left: 0; height: 80px; width: 80px; }
 
-        /* --- حاوية الستوري --- */
+        /* --- حاوية الستوري (الضبط الخاص بالسكرول) --- */
         .story-container {
             width: 100vw; 
             height: 100vh; height: 100dvh;
-            overflow-y: scroll; scroll-snap-type: y mandatory; scroll-behavior: smooth;
+            overflow-y: scroll; 
+            scroll-snap-type: y mandatory; /* إجبار التوقف */
+            scroll-behavior: smooth;
             -webkit-overflow-scrolling: touch;
         }
         
         .slide {
-            width: 100vw; height: 100vh; height: 100dvh;
-            scroll-snap-align: start; position: relative; 
+            width: 100vw; 
+            height: 100vh; height: 100dvh;
+            scroll-snap-align: start; 
+            scroll-snap-stop: always; /* <--- دي اللي بتمنع السكرول يجري */
+            position: relative; 
             overflow: hidden; display: flex; justify-content: center; align-items: center;
             background: #000;
         }
@@ -76,55 +73,43 @@
         }
         .slide-media.loaded { opacity: 1; }
 
-        /* زر التشغيل */
-        .play-overlay {
-            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            width: 80px; height: 80px; background: rgba(0,0,0,0.5);
-            border-radius: 50%; display: none; justify-content: center; align-items: center;
-            z-index: 5; pointer-events: none; border: 2px solid #fff;
-            backdrop-filter: blur(5px);
-        }
-        .play-overlay::after { content: '▶'; font-size: 35px; color: #fff; margin-left: 5px; }
-        .slide.paused .play-overlay { display: flex; }
+        .play-overlay { display: none !important; }
 
-        /* تدرج لوني أطول عشان الكلام يبان */
+        /* تدرج لوني مريح للعين */
         .overlay-gradient {
-            position: absolute; bottom: 0; left: 0; width: 100%; height: 70%;
-            background: linear-gradient(to top, rgba(0,0,0,0.95) 10%, rgba(0,0,0,0.6) 50%, transparent 100%); 
+            position: absolute; bottom: 0; left: 0; width: 100%; height: 75%;
+            background: linear-gradient(to top, rgba(0,0,0,0.9) 15%, rgba(0,0,0,0.5) 50%, transparent 100%); 
             z-index: 2; pointer-events: none;
         }
 
-        /* --- النصوص (تم الرفع للأعلى) --- */
         .slide-content {
-            position: absolute; 
-            bottom: 12%; /* رفعته بنسبة مئوية لضمان الظهور */
+            position: absolute; bottom: 18%; 
             right: 20px; left: 20px; z-index: 3;
-            text-align: right; 
+            text-align: center; 
             transform: translateY(20px); opacity: 0; transition: all 0.6s ease 0.3s;
-            /* إضافة مسافة أمان للأيفون */
             padding-bottom: env(safe-area-inset-bottom);
         }
         .slide.active .slide-content { transform: translateY(0); opacity: 1; }
         
         .slide-content h2 { 
-            font-family: 'Dancing Script'; font-size: 3.5rem; color: #ff0055; 
-            margin-bottom: 5px; text-shadow: 0 2px 5px rgba(0,0,0,0.8);
+            font-family: 'Dancing Script'; font-size: 3.8rem; color: #ff0055; 
+            margin-bottom: 8px; text-shadow: 0 2px 10px rgba(0,0,0,0.8);
         }
         .slide-content p { 
-            font-size: 1.1rem; color: #eee; line-height: 1.6; 
-            text-shadow: 0 1px 3px rgba(0,0,0,0.8);
+            font-size: 1.2rem; color: #f0f0f0; line-height: 1.5; 
+            font-weight: 600; letter-spacing: 0.5px;
+            text-shadow: 0 2px 5px rgba(0,0,0,0.9);
         }
         
-        /* --- زر القلب العائم (تم الرفع) --- */
         .floating-heart {
-            position: absolute; 
-            bottom: 25%; /* رفعته فوق الكلام بمسافة كويسة */
-            left: 20px; z-index: 10;
-            width: 50px; height: 50px;
-            color: rgba(255,255,255,0.7); 
-            transition: transform 0.2s, color 0.3s;
+            position: absolute; bottom: 32%; 
+            left: 50%; transform: translateX(-50%); 
+            z-index: 10;
+            width: 55px; height: 55px;
+            color: rgba(255,255,255,0.8); 
+            transition: color 0.3s, transform 0.2s;
             cursor: pointer;
-            filter: drop-shadow(0 2px 5px rgba(0,0,0,0.5));
+            filter: drop-shadow(0 4px 6px rgba(0,0,0,0.5));
         }
         .floating-heart.liked { color: #ff0055; animation: pop 0.3s forwards; }
 
@@ -134,33 +119,35 @@
             position: relative; overflow: hidden;
         }
         .message-box {
-            background: rgba(255, 255, 255, 0.85);
-            backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
-            width: 90%; max-width: 550px;
-            padding: 30px 25px; border-radius: 20px;
-            box-shadow: 0 15px 35px rgba(255, 118, 139, 0.3);
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
+            width: 88%; max-width: 500px;
+            padding: 35px 25px; border-radius: 25px;
+            box-shadow: 0 20px 40px rgba(255, 118, 139, 0.25);
             text-align: center; opacity: 0;
             transform: translateY(30px) scale(0.95);
             transition: all 1.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-            z-index: 10; border: 1px solid rgba(255, 255, 255, 0.4);
-            /* رفع الصندوق للأعلى قليلاً */
+            z-index: 10; border: 1px solid rgba(255, 255, 255, 0.6);
             margin-bottom: 10%;
         }
         .final-slide.active .message-box { opacity: 1; transform: translateY(0) scale(1); }
-        .final-message { font-size: 1.1rem; line-height: 1.8; color: #333; font-weight: 600; }
-        .signature { display: block; margin-top: 15px; font-weight: 700; color: #ff0055; font-size: 1.3rem; }
+        .final-message { 
+            font-size: 1.15rem; line-height: 1.9; color: #2a2a2a; 
+            font-weight: 600; dir: rtl; 
+        }
+        .signature { display: block; margin-top: 15px; font-weight: 800; color: #ff0055; font-size: 1.4rem; }
         
         .buttons-container { display: flex; flex-direction: column; align-items: center; gap: 12px; margin-top: 25px; }
         .action-btn {
-            display: inline-block; padding: 12px 30px;
-            border-radius: 50px; font-weight: 700; font-size: 0.95rem;
+            display: inline-block; padding: 14px 35px;
+            border-radius: 50px; font-weight: 700; font-size: 1rem;
             text-decoration: none; cursor: pointer; border: none;
-            width: 100%; max-width: 250px; transition: transform 0.2s;
+            width: 100%; max-width: 260px; transition: transform 0.2s;
             user-select: none; -webkit-user-select: none;
         }
-        .action-btn:active { transform: scale(0.95); }
+        .action-btn:active { transform: scale(0.96); }
         .btn-restart { background: #fff; color: #ff0055; border: 2px solid #ff0055; }
-        .btn-site { background: #ff0055; color: #fff; box-shadow: 0 5px 15px rgba(255, 0, 85, 0.3); }
+        .btn-site { background: #ff0055; color: #fff; box-shadow: 0 8px 20px rgba(255, 0, 85, 0.25); }
 
         .rain-item { position: absolute; top: -10%; pointer-events: none; z-index: 1; animation: fall linear forwards; opacity: 0.7; }
         @keyframes fall { to { transform: translateY(120vh) rotate(360deg); } }
@@ -193,17 +180,9 @@
     <div class="story-container" id="stories"></div>
 
     <script>
-        // ==========================================
-        //  ↓↓↓ اكتب أوصاف الصور هنا ↓↓↓
-        // ==========================================
-        const descriptions = {
-            1: "اكتب وصف الصورة رقم 1 هنا...",
-            2: "اكتب وصف الصورة رقم 2 هنا...",
-            // ... أكمل
-            82: "اكتب وصف الصورة رقم 82 هنا..."
-        };
-        // ==========================================
-
+        // الوصف الموحد لجميع الصور
+        const unifiedDescription = "best memories with my fav person";
+        
         const totalSlides = 82; 
         const container = document.getElementById('stories');
 
@@ -218,7 +197,7 @@
                 <div class="overlay-gradient"></div>
                 <div class="slide-content">
                     <h2>Memory ${i}</h2>
-                    <p>${descriptions[i] || "أجمل اللحظات التي عشناها سوياً..."}</p>
+                    <p>${unifiedDescription}</p>
                 </div>
                 <div class="floating-heart" onclick="toggleLike(this, event)">
                     <svg class="svg-heart"><use href="#icon-heart"></use></svg>
@@ -227,7 +206,6 @@
             container.appendChild(div);
         }
 
-        // الشريحة النهائية
         const finalSlide = document.createElement('div');
         finalSlide.className = 'slide final-slide';
         finalSlide.id = 'final-slide';
@@ -296,11 +274,7 @@
                         
                         const video = entry.target.querySelector('video');
                         if (video) {
-                            video.play().then(() => {
-                                entry.target.classList.remove('paused');
-                            }).catch(() => {
-                                entry.target.classList.add('paused');
-                            });
+                            video.play().catch(() => {});
                         }
                     }
                 } else {
@@ -311,11 +285,10 @@
                     if (video) {
                         video.pause();
                         video.currentTime = 0;
-                        entry.target.classList.remove('paused');
                     }
                 }
             });
-        }, { rootMargin: "300px 0px", threshold: 0.1 });
+        }, { rootMargin: "0px", threshold: 0.5 }); // تعديل حساسية السكرول
 
         function startRain(container) {
             if (rainInterval) return; 
@@ -349,17 +322,12 @@
             video.setAttribute('playsinline', 'true');
             video.setAttribute('webkit-playsinline', 'true');
             video.setAttribute('preload', 'auto');
-            video.muted = false;
+            video.muted = true; 
 
             const slideElement = container.closest('.slide');
             slideElement.onclick = function(e) {
-                // التأكد أن الضغط ليس على القلب أو الأزرار
-                if (!e.target.closest('.floating-heart') && 
-                    !e.target.closest('.action-btn')) {
-                    if (video.paused) {
-                        video.play();
-                        slideElement.classList.remove('paused');
-                    }
+                if (!e.target.closest('.floating-heart') && !e.target.closest('.action-btn')) {
+                    video.muted = false; 
                 }
             };
 
