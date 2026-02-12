@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Memorito</title>
+    
+    <link rel="icon" href="https://media.tenor.com/HbsmAg2_OUUAAAAj/newt00th-newtooth.gif" type="image/gif">
+    <link rel="shortcut icon" href="https://media.tenor.com/HbsmAg2_OUUAAAAj/newt00th-newtooth.gif" type="image/gif">
+    <link rel="apple-touch-icon" href="https://media.tenor.com/HbsmAg2_OUUAAAAj/newt00th-newtooth.gif">
+    
+    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body { background-color: #000; font-family: 'Cairo', sans-serif; overflow: hidden; color: #fff; }
+
+        /* --- اللودر --- */
+        #loader {
+            position: fixed; inset: 0; background: #000; z-index: 9999;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            transition: opacity 0.8s ease;
+        }
+        .brand { font-family: 'Dancing Script', cursive; font-size: 4rem; color: #ff0055; margin-bottom: 20px; }
+        .heart-box { position: relative; width: 60px; height: 60px; }
+        .h-icon { font-size: 60px; position: absolute; top:0; left:0; line-height: 60px; }
+        .h-gray { color: #333; }
+        .h-pink { 
+            color: #ff0055; overflow: hidden; height: 0%; 
+            animation: fillUp 2.5s ease-in-out forwards;
+            filter: drop-shadow(0 0 10px #ff0055);
+        }
+
+        /* --- حاوية الستوري --- */
+        .story-container {
+            height: 100vh; width: 100vw; overflow-y: scroll;
+            scroll-snap-type: y mandatory; scroll-behavior: smooth;
+        }
+        .slide {
+            height: 100vh; width: 100vw; scroll-snap-align: start;
+            position: relative; overflow: hidden; display: flex; justify-content: center; align-items: center;
+            background: #000;
+        }
+        
+        .slide-media {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            object-fit: cover; z-index: 1; opacity: 0; transition: opacity 0.6s ease;
+        }
+        .slide-media.loaded { opacity: 1; }
+
+        .overlay-gradient {
+            position: absolute; bottom: 0; left: 0; width: 100%; height: 60%;
+            background: linear-gradient(to top, rgba(0,0,0,0.9), transparent); z-index: 2;
+        }
+        .slide-content {
+            position: absolute; bottom: 40px; right: 20px; left: 20px; z-index: 3;
+            text-align: right; transform: translateY(20px); opacity: 0; transition: all 0.6s ease 0.3s;
+        }
+        .slide.active .slide-content { transform: translateY(0); opacity: 1; }
+        .slide-content h2 { font-family: 'Dancing Script'; font-size: 3.5rem; color: #ff0055; margin-bottom: 5px; }
+        .slide-content p { font-size: 1.1rem; color: #eee; line-height: 1.6; }
+        
+        .floating-heart {
+            position: absolute; bottom: 80px; left: 20px; z-index: 10;
+            font-size: 2.5rem; color: rgba(255,255,255,0.7); transition: transform 0.2s;
+            cursor: pointer;
+        }
+        .floating-heart.liked { color: #ff0055; animation: pop 0.3s forwards; }
+
+        /* --- تنسيق الشريحة الأخيرة --- */
+        .final-slide {
+            background: linear-gradient(135deg, #ff758c 0%, #ff7eb3 100%);
+            position: relative; overflow: hidden;
+        }
+        
+        .message-box {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(10px);
+            width: 90%; max-width: 550px;
+            padding: 40px 30px; border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(255, 118, 139, 0.3);
+            text-align: center; opacity: 0;
+            transform: translateY(30px) scale(0.95);
+            transition: all 1.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            z-index: 10; border: 1px solid rgba(255, 255, 255, 0.4);
+        }
+        .final-slide.active .message-box { opacity: 1; transform: translateY(0) scale(1); }
+        .final-message { font-size: 1.2rem; line-height: 1.9; color: #333; font-weight: 600; }
+        .signature { display: block; margin-top: 20px; font-weight: 700; color: #ff0055; font-size: 1.3rem; }
+        
+        /* تنسيق الأزرار الجديدة */
+        .buttons-container {
+            display: flex; flex-direction: column; align-items: center; gap: 15px; margin-top: 35px;
+        }
+        .action-btn {
+            display: inline-block; padding: 12px 40px;
+            border-radius: 50px; font-weight: 700; font-size: 1rem;
+            text-decoration: none; cursor: pointer; border: none;
+            width: 100%; max-width: 250px;
+            transition: transform 0.2s;
+        }
+        .action-btn:active { transform: scale(0.95); }
+        
+        /* زر العودة للبداية */
+        .btn-restart {
+            background: #fff; color: #ff0055;
+            border: 2px solid #ff0055;
+        }
+        /* زر العودة للموقع */
+        .btn-site {
+            background: #ff0055; color: #fff;
+            box-shadow: 0 5px 15px rgba(255, 0, 85, 0.3);
+        }
+
+        /* --- أنيميشن المطر --- */
+        .rain-item {
+            position: absolute; top: -10%; pointer-events: none; z-index: 1;
+            animation: fall linear forwards; opacity: 0.7;
+        }
+        @keyframes fall { to { transform: translateY(120vh) rotate(360deg); } }
+
+        /* --- أنيميشن انفجار القلوب --- */
+        .heart-particle {
+            position: fixed; pointer-events: none; font-size: 1.5rem; color: #ff0055;
+            z-index: 100; transition: transform 1s ease-out, opacity 1s ease-out; opacity: 1;
+        }
+
+        @keyframes fillUp { to { height: 100%; } }
+        @keyframes pop { 0% { transform: scale(1); } 50% { transform: scale(1.4); } 100% { transform: scale(1); } }
+    </style>
+</head>
+<body>
+
+    <div id="loader">
+        <div class="brand">Memorito</div>
+        <div class="heart-box">
+            <div class="h-icon h-gray">❤</div>
+            <div class="h-icon h-pink">❤</div>
+        </div>
+    </div>
+
+    <div class="story-container" id="stories"></div>
+
+    <script>
+        // ============================================================
+        //  ↓↓↓ وصف الـ 82 صورة ↓↓↓
+        // ============================================================
+        
+        const descriptions = {
+            1: "وهنا كانت بدايه كل حاجه ",
+            2: "فاكره؟",
+            3: "بلازا",
+            4: "والدار امان...الدار امان",
+            5: "العوده بعد اشتياق    ",
+            6: "كل مشوفها افتكر الريزو وضحك",
+            7: " احنا الي شهرنا سموزي  ",
+            8: "صوره يمكنك سماعها ",
+            9: "يارب نتجوز يارب",
+            10: "انتي تيجي فحضني ديما يا ميمو يا حبيبتي",
+            11: "وفضل شايلك فعنيا يا روحي",
+            12: "لو مش معاكي يا حبيبتي بلا خيبه ",
+            13: "اكتب وصف الصورة رقم 13 هنا...",
+            14: "اكتب وصف الصورة رقم 14 هنا...",
+            15: "اكتب وصف الصورة رقم 15 هنا...",
+            16: "اكتب وصف الصورة رقم 16 هنا...",
+            17: "اكتب وصف الصورة رقم 17 هنا...",
+            18: "اكتب وصف الصورة رقم 18 هنا...",
+            19: "اكتب وصف الصورة رقم 19 هنا...",
+            20: "اكتب وصف الصورة رقم 20 هنا...",
+            21: "اكتب وصف الصورة رقم 21 هنا...",
+            22: "اكتب وصف الصورة رقم 22 هنا...",
+            23: "اكتب وصف الصورة رقم 23 هنا...",
+            24: "اكتب وصف الصورة رقم 24 هنا...",
+            25: "اكتب وصف الصورة رقم 25 هنا...",
+            26: "اكتب وصف الصورة رقم 26 هنا...",
+            27: "اكتب وصف الصورة رقم 27 هنا...",
+            28: "اكتب وصف الصورة رقم 28 هنا...",
+            29: "اكتب وصف الصورة رقم 29 هنا...",
+            30: "اكتب وصف الصورة رقم 30 هنا...",
+            31: "اكتب وصف الصورة رقم 31 هنا...",
+            32: "اكتب وصف الصورة رقم 32 هنا...",
+            33: "اكتب وصف الصورة رقم 33 هنا...",
+            34: "اكتب وصف الصورة رقم 34 هنا...",
+            35: "اكتب وصف الصورة رقم 35 هنا...",
+            36: "اكتب وصف الصورة رقم 36 هنا...",
+            37: "اكتب وصف الصورة رقم 37 هنا...",
+            38: "اكتب وصف الصورة رقم 38 هنا...",
+            39: "اكتب وصف الصورة رقم 39 هنا...",
+            40: "اكتب وصف الصورة رقم 40 هنا...",
+            41: "اكتب وصف الصورة رقم 41 هنا...",
+            42: "اكتب وصف الصورة رقم 42 هنا...",
+            43: "اكتب وصف الصورة رقم 43 هنا...",
+            44: "اكتب وصف الصورة رقم 44 هنا...",
+            45: "اكتب وصف الصورة رقم 45 هنا...",
+            46: "اكتب وصف الصورة رقم 46 هنا...",
+            47: "اكتب وصف الصورة رقم 47 هنا...",
+            48: "اكتب وصف الصورة رقم 48 هنا...",
+            49: "اكتب وصف الصورة رقم 49 هنا...",
+            50: "اكتب وصف الصورة رقم 50 هنا...",
+            51: "اكتب وصف الصورة رقم 51 هنا...",
+            52: "اكتب وصف الصورة رقم 52 هنا...",
+            53: "اكتب وصف الصورة رقم 53 هنا...",
+            54: "اكتب وصف الصورة رقم 54 هنا...",
+            55: "اكتب وصف الصورة رقم 55 هنا...",
+            56: "اكتب وصف الصورة رقم 56 هنا...",
+            57: "اكتب وصف الصورة رقم 57 هنا...",
+            58: "اكتب وصف الصورة رقم 58 هنا...",
+            59: "اكتب وصف الصورة رقم 59 هنا...",
+            60: "اكتب وصف الصورة رقم 60 هنا...",
+            61: "اكتب وصف الصورة رقم 61 هنا...",
+            62: "اكتب وصف الصورة رقم 62 هنا...",
+            63: "اكتب وصف الصورة رقم 63 هنا...",
+            64: "اكتب وصف الصورة رقم 64 هنا...",
+            65: "اكتب وصف الصورة رقم 65 هنا...",
+            66: "اكتب وصف الصورة رقم 66 هنا...",
+            67: "اكتب وصف الصورة رقم 67 هنا...",
+            68: "اكتب وصف الصورة رقم 68 هنا...",
+            69: "اكتب وصف الصورة رقم 69 هنا...",
+            70: "اكتب وصف الصورة رقم 70 هنا...",
+            71: "اكتب وصف الصورة رقم 71 هنا...",
+            72: "اكتب وصف الصورة رقم 72 هنا...",
+            73: "اكتب وصف الصورة رقم 73 هنا...",
+            74: "اكتب وصف الصورة رقم 74 هنا...",
+            75: "اكتب وصف الصورة رقم 75 هنا...",
+            76: "اكتب وصف الصورة رقم 76 هنا...",
+            77: "اكتب وصف الصورة رقم 77 هنا...",
+            78: "اكتب وصف الصورة رقم 78 هنا...",
+            79: "اكتب وصف الصورة رقم 79 هنا...",
+            80: "اكتب وصف الصورة رقم 80 هنا...",
+            81: "اكتب وصف الصورة رقم 81 هنا...",
+            82: "اكتب وصف الصورة رقم 82 هنا..."
+        };
+
+        const totalSlides = 82; 
+        const container = document.getElementById('stories');
+
+        for (let i = 1; i <= totalSlides; i++) {
+            const div = document.createElement('div');
+            div.className = 'slide';
+            div.id = `slide-${i}`;
+            
+            div.innerHTML = `
+                <div class="media-placeholder" id="media-container-${i}" style="width:100%; height:100%;"></div>
+                <div class="overlay-gradient"></div>
+                <div class="slide-content">
+                    <h2>Memory ${i}</h2>
+                    <p>${descriptions[i]}</p>
+                </div>
+                <div class="floating-heart" onclick="toggleLike(this, event)">❤</div>
+            `;
+            container.appendChild(div);
+        }
+
+        // --- الشريحة النهائية (رقم 83) ---
+        const finalSlide = document.createElement('div');
+        finalSlide.className = 'slide final-slide';
+        finalSlide.id = 'final-slide';
+        finalSlide.innerHTML = `
+            <div class="message-box">
+                <p class="final-message">
+                    ربنا يخليكي ليا يا ميمو يا حبيبتي يارب والعمر كلو مع بعض ومشوفش فيكي اي وحش وافضل اشوفك مبسوطه ونفضل نرخم علي بعض كدا انا عاوز اقضي الباقي من عمري كلو معاكي هتفضلي حبيبتي لحد اخر يوم فعمري هتفضلي اختياري الاول و الاخير بحبك اووووي يا ميمو ربنا ميحرمني منك ابدا يا اجمل رزق من ربنا يا احلي حاجه حصلتلي فحياتي بحبك اوي يا ميمو اوي اوي خليكي فاكرة إني هفضل جنبك العمر كلو ومش هزهق ولا هبعد ولا هتغير وهفضل أحبك ديماً وتفضلي دلوعتي بحبك أوي.
+                    <span class="signature">(حمودك)</span>
+                </p>
+                <div class="buttons-container">
+                    <button onclick="scrollToTop()" class="action-btn btn-restart">العودة لأول memory</button>
+                    <a href="https://memorito.netlify.app/" class="action-btn btn-site">العودة للموقع</a>
+                </div>
+            </div>
+        `;
+        container.appendChild(finalSlide);
+
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                const loader = document.getElementById('loader');
+                loader.style.opacity = '0';
+                setTimeout(() => loader.style.display = 'none', 800);
+            }, 3000);
+        });
+
+        // دالة العودة للبداية
+        function scrollToTop() {
+            container.scrollTo({
+                top: 0,
+                behavior: 'smooth'
+            });
+        }
+
+        function toggleLike(btn, event) {
+            btn.classList.toggle('liked');
+            if (btn.classList.contains('liked')) {
+                createHeartBurst(event.clientX, event.clientY);
+            }
+        }
+
+        function createHeartBurst(x, y) {
+            for (let i = 0; i < 12; i++) {
+                const heart = document.createElement('div');
+                heart.classList.add('heart-particle');
+                heart.innerHTML = '❤';
+                heart.style.left = (x - 10) + 'px';
+                heart.style.top = (y - 10) + 'px';
+                document.body.appendChild(heart);
+                const xOffset = (Math.random() - 0.5) * 150; 
+                const yOffset = -(Math.random() * 150 + 50); 
+                requestAnimationFrame(() => {
+                   heart.style.transform = `translate(${xOffset}px, ${yOffset}px) rotate(${Math.random()*360}deg) scale(0.5)`;
+                   heart.style.opacity = '0';
+                });
+                setTimeout(() => heart.remove(), 1000);
+            }
+        }
+
+        let rainInterval;
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('active');
+                    if (entry.target.id === 'final-slide') {
+                        startRain(entry.target);
+                    }
+                    const index = entry.target.id.split('-')[1];
+                    if (index) {
+                        const mediaContainer = document.getElementById(`media-container-${index}`);
+                        if (mediaContainer && mediaContainer.innerHTML === "") tryToLoadMedia(index, mediaContainer);
+                        const video = entry.target.querySelector('video');
+                        if (video) video.play().catch(() => {});
+                    }
+                } else {
+                    entry.target.classList.remove('active');
+                    if (entry.target.id === 'final-slide') {
+                        stopRain();
+                    }
+                    const video = entry.target.querySelector('video');
+                    if (video) {
+                        video.pause();
+                        video.currentTime = 0; // إعادة الفيديو للبداية
+                    }
+                }
+            });
+        }, { rootMargin: "300px 0px", threshold: 0.1 });
+
+        function startRain(container) {
+            if (rainInterval) return; 
+            rainInterval = setInterval(() => {
+                const item = document.createElement('div');
+                item.classList.add('rain-item');
+                item.innerHTML = Math.random() > 0.5 ? '❤' : '🌹';
+                item.style.left = Math.random() * 100 + '%';
+                const size = Math.random() * 1 + 0.8; 
+                item.style.fontSize = size + 'rem';
+                const duration = Math.random() * 3 + 4; 
+                item.style.animationDuration = duration + 's';
+                container.appendChild(item);
+                setTimeout(() => { item.remove(); }, duration * 1000);
+            }, 300); 
+        }
+
+        function stopRain() {
+            clearInterval(rainInterval);
+            rainInterval = null;
+            document.querySelectorAll('.rain-item').forEach(item => item.remove());
+        }
+
+        function tryToLoadMedia(id, container) {
+            if (!id || id === 'slide') return;
+            const v = new Date().getTime(); 
+            const video = document.createElement('video');
+            video.className = 'slide-media';
+            video.loop = true; video.playsInline = true;
+            video.src = `images/${id}.mp4?v=${v}`;
+            video.onclick = () => video.play();
+            video.oncanplay = () => { if (!video.dataset.loaded) { video.dataset.loaded = "true"; video.classList.add('loaded'); } };
+            video.onerror = () => {
+                video.remove();
+                const img = document.createElement('img');
+                img.className = 'slide-media';
+                img.src = `images/${id}.jpg?v=${v}`; 
+                img.onload = () => img.classList.add('loaded');
+                img.onerror = () => { img.src = `https://via.placeholder.com/800x1600/111/fff?text=Photo+${id}`; img.classList.add('loaded'); };
+                container.appendChild(img);
+            };
+            container.appendChild(video);
+        }
+
+        document.querySelectorAll('.slide').forEach(s => observer.observe(s));
+    </script>
+</body>
+</html>
