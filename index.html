@@ -48,15 +48,18 @@
         }
         .slide-media.loaded { opacity: 1; }
 
-        /* زر التشغيل للأيفون */
-        .play-btn-overlay {
+        /* --- زر التشغيل (يظهر لما الفيديو يعلق) --- */
+        .play-overlay {
             position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            font-size: 4rem; color: rgba(255, 255, 255, 0.8);
-            z-index: 5; display: none; cursor: pointer;
-            text-shadow: 0 0 20px rgba(0,0,0,0.5);
-            pointer-events: none; /* عشان الضغطة تيجي ع الفيديو */
+            width: 80px; height: 80px; background: rgba(0,0,0,0.5);
+            border-radius: 50%; display: none; justify-content: center; align-items: center;
+            z-index: 5; pointer-events: none; border: 2px solid #fff;
         }
-        .slide.video-paused .play-btn-overlay { display: block; }
+        .play-overlay::after {
+            content: '▶'; font-size: 40px; color: #fff; margin-left: 5px;
+        }
+        /* كلاس بيضاف لما الفيديو يكون واقف */
+        .slide.paused .play-overlay { display: flex; }
 
         .overlay-gradient {
             position: absolute; bottom: 0; left: 0; width: 100%; height: 60%;
@@ -130,8 +133,7 @@
     <script>
         const descriptions = {
             1: "اكتب وصف الصورة رقم 1 هنا...",
-            2: "اكتب وصف الصورة رقم 2 هنا...",
-            // ... (احتفظ بباقي الأوصاف كما هي)
+            // ... (كمل باقي الأرقام زي ما انت كاتب)
             82: "اكتب وصف الصورة رقم 82 هنا..."
         };
 
@@ -143,9 +145,10 @@
             div.className = 'slide';
             div.id = `slide-${i}`;
             
+            // إضافة زر التشغيل (play-overlay)
             div.innerHTML = `
                 <div class="media-placeholder" id="media-container-${i}" style="width:100%; height:100%;"></div>
-                <div class="play-btn-overlay">▶</div>
+                <div class="play-overlay"></div>
                 <div class="overlay-gradient"></div>
                 <div class="slide-content">
                     <h2>Memory ${i}</h2>
@@ -156,7 +159,6 @@
             container.appendChild(div);
         }
 
-        // الشريحة النهائية
         const finalSlide = document.createElement('div');
         finalSlide.className = 'slide final-slide';
         finalSlide.id = 'final-slide';
@@ -223,21 +225,16 @@
                         const mediaContainer = document.getElementById(`media-container-${index}`);
                         if (mediaContainer && mediaContainer.innerHTML === "") tryToLoadMedia(index, mediaContainer);
                         
-                        // محاولة تشغيل الفيديو
+                        // محاولة تشغيل الفيديو مع معالجة الرفض
                         const video = entry.target.querySelector('video');
                         if (video) {
-                            const playPromise = video.play();
-                            if (playPromise !== undefined) {
-                                playPromise.then(_ => {
-                                    // اشتغل تمام
-                                    entry.target.classList.remove('video-paused');
-                                })
-                                .catch(error => {
-                                    // الأيفون منع التشغيل
-                                    console.log("Autoplay blocked, waiting for interaction");
-                                    entry.target.classList.add('video-paused');
-                                });
-                            }
+                            video.play().then(() => {
+                                // اشتغل تمام
+                                entry.target.classList.remove('paused');
+                            }).catch(() => {
+                                // الموبايل رفض التشغيل التلقائي -> اظهر زرار التشغيل
+                                entry.target.classList.add('paused');
+                            });
                         }
                     }
                 } else {
@@ -247,8 +244,8 @@
                     const video = entry.target.querySelector('video');
                     if (video) {
                         video.pause();
-                        video.currentTime = 0; 
-                        entry.target.classList.remove('video-paused'); // إعادة ضبط حالة الزر
+                        video.currentTime = 0;
+                        entry.target.classList.remove('paused');
                     }
                 }
             });
@@ -280,61 +277,53 @@
             if (!id || id === 'slide') return;
             const v = new Date().getTime(); 
             
-            // 1. إنشاء عنصر الفيديو
+            // محاولة تحميل الفيديو
             const video = document.createElement('video');
             video.className = 'slide-media';
             video.loop = true;
-            video.setAttribute('playsinline', ''); // مهم جدا للأيفون
-            video.setAttribute('webkit-playsinline', '');
-            
-            // إضافة خاصية النقر للتشغيل اليدوي
-            video.onclick = function() {
-                if (video.paused) {
-                    video.play();
-                    container.parentElement.classList.remove('video-paused');
-                } else {
-                    video.pause();
+            // خصائص مهمة جداً للأيفون
+            video.setAttribute('playsinline', 'true');
+            video.setAttribute('webkit-playsinline', 'true');
+            video.preload = 'metadata'; // تحميل البيانات عشان تظهر أول لقطة
+
+            // عند الضغط على الشاشة (في أي مكان)
+            const slideElement = container.closest('.slide');
+            slideElement.onclick = function(e) {
+                // لو الضغطة مش على القلب
+                if (!e.target.classList.contains('floating-heart')) {
+                    if (video.paused) {
+                        video.play();
+                        slideElement.classList.remove('paused');
+                    } else {
+                        // اختياري: لو عاوز الضغطة توقف الفيديو كمان
+                        // video.pause();
+                    }
                 }
             };
 
-            // 2. إعداد المتغيرات
-            let isLoaded = false;
-            
-            // 3. وظيفة الفشل (تحويل لصورة)
-            const fallbackToImage = () => {
-                if (isLoaded) return; // لو حمل خلاص متعملش حاجة
-                isLoaded = true;
+            // لو فشل تحميل الفيديو (الملف مش موجود أصلاً)، حول لصورة
+            video.onerror = () => {
                 video.remove();
-                
                 const img = document.createElement('img');
                 img.className = 'slide-media';
                 img.src = `images/${id}.jpg?v=${v}`;
                 img.onload = () => img.classList.add('loaded');
                 img.onerror = () => { 
-                    img.src = `https://via.placeholder.com/800x1600/111/fff?text=Memory+${id}`; 
+                    img.src = `https://via.placeholder.com/800x1600/111/fff?text=Photo+${id}`; 
                     img.classList.add('loaded'); 
                 };
                 container.appendChild(img);
+                // إزالة مستمع الضغط لو طلعت صورة
+                slideElement.onclick = null; 
             };
 
-            // 4. مراقبة تحميل الفيديو
-            video.onloadedmetadata = () => {
-                isLoaded = true;
+            // لو الفيديو حمل وبقى جاهز
+            video.onloadeddata = () => {
                 video.classList.add('loaded');
             };
-            
-            video.onerror = fallbackToImage;
 
-            // 5. تعيين المصدر أخيراً
             video.src = `images/${id}.mp4?v=${v}`;
             container.appendChild(video);
-
-            // 6. مؤقت الأمان: لو الفيديو علق ومشتغلش خلال ثانية ونص، اقلب صورة
-            setTimeout(() => {
-                if (!isLoaded && video.readyState === 0) {
-                    fallbackToImage();
-                }
-            }, 1500);
         }
 
         document.querySelectorAll('.slide').forEach(s => observer.observe(s));
