@@ -69,9 +69,9 @@
     <script>
         const totalSlides = 82;
         const container = document.getElementById('stories');
-        // متغير عالمي لحالة الصوت
         let isGlobalMuted = true;
 
+        // توليد الصفحات
         for (let i = 1; i <= totalSlides; i++) {
             const div = document.createElement('div');
             div.className = 'slide';
@@ -95,55 +95,61 @@
         final.id = 'final-slide';
         final.innerHTML = `<div class="message-box">
             <p class="final-message">ربنا يخليكي ليا يا ميمو يا حبيبتي يارب والعمر كلو مع بعض ومشوفش فيكي اي وحش وافضل اشوفك مبسوطه ونفضل نرخم علي بعض كدا انا عاوز اقضي الباقي من عمري كلو معاكي هتفضلي حبيبتي لحد اخر يوم فعمري هتفضلي اختياري الاول و الاخير بحبك اووووي يا ميمو ربنا ميحرمني منك ابدا يا اجمل رزق من ربنا يا احلي حاجه حصلتلي فحياتي بحبك اوي يا ميمو اوي اوي خليكي فاكرة إني هفضل جنبك العمر كلو ومش هزهق ولا هبعد ولا هتغير وهفضل أحبك ديماً وتفضلي دلوعتي بحبك أوي. <span class="signature">(حمودك)</span></p>
-            <a href="#" onclick="window.scrollTo(0,0); return false;" class="btn-restart">العودة لأول memory</a>
+            <a href="#" onclick="container.scrollTo(0,0); return false;" class="btn-restart">العودة لأول memory</a>
             <a href="https://memorito.netlify.app/" class="btn-site">العودة للموقع</a>
         </div>`;
         container.appendChild(final);
 
-        // تفعيل الصوت لجميع الفيديوهات عند أول ضغطة في أي مكان بالموقع
-        document.body.addEventListener('click', () => {
-            if (isGlobalMuted) {
-                isGlobalMuted = false;
-                // إلغاء كتم الفيديو الحالي فوراً
-                const currentVideo = document.querySelector('.slide.active video');
-                if (currentVideo) currentVideo.muted = false;
-            }
-        }, { once: false });
+        // تفعيل الصوت العام
+        document.body.addEventListener('touchstart', function unlock() {
+            isGlobalMuted = false;
+            const activeVideo = document.querySelector('.slide.active video');
+            if (activeVideo) activeVideo.muted = false;
+            document.body.removeEventListener('touchstart', unlock);
+        });
 
-        window.onload = () => setTimeout(() => { document.getElementById('loader').style.opacity = '0'; setTimeout(() => document.getElementById('loader').style.display = 'none', 800); }, 2500);
+        window.onload = () => setTimeout(() => { 
+            document.getElementById('loader').style.opacity = '0'; 
+            setTimeout(() => document.getElementById('loader').style.display = 'none', 800); 
+        }, 2500);
 
         function toggleLike(btn) { btn.classList.toggle('liked'); }
 
+        // نظام المراقب المحدث
         const observer = new IntersectionObserver((entries) => {
             entries.forEach(entry => {
+                const id = parseInt(entry.target.id.split('-')[1]);
+                const v = entry.target.querySelector('video');
+
                 if (entry.isIntersecting) {
                     entry.target.classList.add('active');
-                    const id = entry.target.id.split('-')[1];
-                    if (id && id !== 'slide') loadMedia(id);
+                    // تحميل الحالي واللي قبله واللي بعده لضمان السرعة
+                    loadMedia(id);
+                    if (id < totalSlides) loadMedia(id + 1);
+                    if (id > 1) loadMedia(id - 1);
                     
-                    const v = entry.target.querySelector('video');
                     if (v) {
-                        // تطبيق حالة الصوت الحالية (لو ميمو داست مرة قبل كدا، الفيديو اللي عليه الدور هيفتح بصوت)
                         v.muted = isGlobalMuted;
                         v.play().catch(() => {});
                     }
                 } else {
                     entry.target.classList.remove('active');
-                    const v = entry.target.querySelector('video');
                     if (v) { v.pause(); v.currentTime = 0; }
                 }
             });
-        }, { threshold: 0.6 });
+        }, { threshold: 0.5 }); // تقليل الـ threshold عشان يبدأ بدري
 
         function loadMedia(id) {
+            if (!id || id > totalSlides) return;
             const box = document.getElementById(`media-container-${id}`);
             if (!box || box.innerHTML !== "") return;
             
             const v = document.createElement('video');
             v.className = 'slide-media';
             v.loop = true; 
-            v.muted = isGlobalMuted; // يبدأ بالحالة العالمية الحالية
+            v.muted = isGlobalMuted;
             v.setAttribute('playsinline', '');
+            v.setAttribute('preload', 'auto'); // إجبار المتصفح يجهز الفيديو
             v.src = `images/${id}.mp4`;
             
             v.oncanplay = () => v.classList.add('loaded');
@@ -153,7 +159,10 @@
                 img.className = 'slide-media';
                 img.src = `images/${id}.jpg`;
                 img.onload = () => img.classList.add('loaded');
-                img.onerror = () => { img.src = `images/${id}.JPG`; img.onload = () => img.classList.add('loaded'); };
+                img.onerror = () => { 
+                    img.src = `images/${id}.JPG`; 
+                    img.onload = () => img.classList.add('loaded'); 
+                };
                 box.appendChild(img);
             };
             box.appendChild(v);
