@@ -69,6 +69,8 @@
     <script>
         const totalSlides = 82;
         const container = document.getElementById('stories');
+        // متغير عالمي لحالة الصوت
+        let isGlobalMuted = true;
 
         for (let i = 1; i <= totalSlides; i++) {
             const div = document.createElement('div');
@@ -98,6 +100,16 @@
         </div>`;
         container.appendChild(final);
 
+        // تفعيل الصوت لجميع الفيديوهات عند أول ضغطة في أي مكان بالموقع
+        document.body.addEventListener('click', () => {
+            if (isGlobalMuted) {
+                isGlobalMuted = false;
+                // إلغاء كتم الفيديو الحالي فوراً
+                const currentVideo = document.querySelector('.slide.active video');
+                if (currentVideo) currentVideo.muted = false;
+            }
+        }, { once: false });
+
         window.onload = () => setTimeout(() => { document.getElementById('loader').style.opacity = '0'; setTimeout(() => document.getElementById('loader').style.display = 'none', 800); }, 2500);
 
         function toggleLike(btn) { btn.classList.toggle('liked'); }
@@ -108,8 +120,13 @@
                     entry.target.classList.add('active');
                     const id = entry.target.id.split('-')[1];
                     if (id && id !== 'slide') loadMedia(id);
+                    
                     const v = entry.target.querySelector('video');
-                    if (v) v.play().catch(() => {});
+                    if (v) {
+                        // تطبيق حالة الصوت الحالية (لو ميمو داست مرة قبل كدا، الفيديو اللي عليه الدور هيفتح بصوت)
+                        v.muted = isGlobalMuted;
+                        v.play().catch(() => {});
+                    }
                 } else {
                     entry.target.classList.remove('active');
                     const v = entry.target.querySelector('video');
@@ -122,10 +139,11 @@
             const box = document.getElementById(`media-container-${id}`);
             if (!box || box.innerHTML !== "") return;
             
-            // نجرب الفيديو أولاً
             const v = document.createElement('video');
             v.className = 'slide-media';
-            v.loop = true; v.muted = true; v.setAttribute('playsinline', '');
+            v.loop = true; 
+            v.muted = isGlobalMuted; // يبدأ بالحالة العالمية الحالية
+            v.setAttribute('playsinline', '');
             v.src = `images/${id}.mp4`;
             
             v.oncanplay = () => v.classList.add('loaded');
@@ -133,15 +151,12 @@
                 v.remove();
                 const img = document.createElement('img');
                 img.className = 'slide-media';
-                img.src = `images/${id}.jpg`; // نجرب jpg
+                img.src = `images/${id}.jpg`;
                 img.onload = () => img.classList.add('loaded');
-                img.onerror = () => { img.src = `images/${id}.JPG`; img.onload = () => img.classList.add('loaded'); }; // نجرب JPG
+                img.onerror = () => { img.src = `images/${id}.JPG`; img.onload = () => img.classList.add('loaded'); };
                 box.appendChild(img);
             };
             box.appendChild(v);
-            
-            const slide = box.closest('.slide');
-            slide.onclick = () => { if(v) v.muted = false; };
         }
 
         document.querySelectorAll('.slide').forEach(s => observer.observe(s));
