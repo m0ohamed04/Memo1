@@ -32,7 +32,7 @@
         .story-container { width: 100vw; height: 100dvh; overflow-y: scroll; scroll-snap-type: y mandatory; scroll-behavior: smooth; -webkit-overflow-scrolling: touch; }
         .slide { width: 100vw; height: 100dvh; scroll-snap-align: start; scroll-snap-stop: always; position: relative; overflow: hidden; background: #000; display: flex; justify-content: center; align-items: center; }
         
-        .slide-media { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity 0.5s; }
+        .slide-media { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity 0.5s; z-index: 1; }
         .slide-media.loaded { opacity: 1; }
 
         .overlay-gradient { position: absolute; bottom: 0; left: 0; width: 100%; height: 50%; background: linear-gradient(to top, rgba(0,0,0,0.9), transparent); z-index: 2; pointer-events: none; }
@@ -46,7 +46,7 @@
         .floating-heart.liked { color: #ff0055; animation: pop 0.3s forwards; }
 
         .final-slide { background: linear-gradient(135deg, #ff758c, #ff7eb3); display: flex; justify-content: center; align-items: center; }
-        .message-box { background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(10px); width: 85%; padding: 30px 20px; border-radius: 20px; text-align: center; color: #333; }
+        .message-box { background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(10px); width: 85%; padding: 30px 20px; border-radius: 20px; text-align: center; color: #333; z-index: 10; }
         .final-message { font-size: 1.1rem; line-height: 1.7; font-weight: 600; }
         .signature { display: block; margin-top: 15px; color: #ff0055; font-size: 1.3rem; font-weight: 800; }
         .btn-restart { display: block; margin: 20px auto 10px; padding: 10px 25px; background: #fff; color: #ff0055; border: 2px solid #ff0055; border-radius: 50px; font-weight: 700; text-decoration: none; }
@@ -71,7 +71,6 @@
         const container = document.getElementById('stories');
         let isGlobalMuted = true;
 
-        // توليد الصفحات
         for (let i = 1; i <= totalSlides; i++) {
             const div = document.createElement('div');
             div.className = 'slide';
@@ -100,13 +99,11 @@
         </div>`;
         container.appendChild(final);
 
-        // تفعيل الصوت العام
-        document.body.addEventListener('touchstart', function unlock() {
+        document.body.addEventListener('touchstart', () => {
             isGlobalMuted = false;
-            const activeVideo = document.querySelector('.slide.active video');
-            if (activeVideo) activeVideo.muted = false;
-            document.body.removeEventListener('touchstart', unlock);
-        });
+            const v = document.querySelector('.slide.active video');
+            if (v) v.muted = false;
+        }, { once: true });
 
         window.onload = () => setTimeout(() => { 
             document.getElementById('loader').style.opacity = '0'; 
@@ -115,41 +112,34 @@
 
         function toggleLike(btn) { btn.classList.toggle('liked'); }
 
-        // نظام المراقب المحدث
         const observer = new IntersectionObserver((entries) => {
             entries.forEach(entry => {
                 const id = parseInt(entry.target.id.split('-')[1]);
-                const v = entry.target.querySelector('video');
-
+                const box = document.getElementById(`media-container-${id}`);
+                
                 if (entry.isIntersecting) {
                     entry.target.classList.add('active');
-                    // تحميل الحالي واللي قبله واللي بعده لضمان السرعة
-                    loadMedia(id);
-                    if (id < totalSlides) loadMedia(id + 1);
-                    if (id > 1) loadMedia(id - 1);
-                    
-                    if (v) {
-                        v.muted = isGlobalMuted;
-                        v.play().catch(() => {});
-                    }
+                    loadMedia(id); 
+                    const v = entry.target.querySelector('video');
+                    if (v) { v.muted = isGlobalMuted; v.play().catch(() => {}); }
                 } else {
                     entry.target.classList.remove('active');
-                    if (v) { v.pause(); v.currentTime = 0; }
+                    const v = entry.target.querySelector('video');
+                    if (v) { v.pause(); }
                 }
             });
-        }, { threshold: 0.5 }); // تقليل الـ threshold عشان يبدأ بدري
+        }, { threshold: 0.2 }); // حساس جداً عشان يحمل بدري
 
         function loadMedia(id) {
             if (!id || id > totalSlides) return;
             const box = document.getElementById(`media-container-${id}`);
             if (!box || box.innerHTML !== "") return;
             
+            // بنجرب الفيديو الأول
             const v = document.createElement('video');
             v.className = 'slide-media';
-            v.loop = true; 
-            v.muted = isGlobalMuted;
+            v.loop = true; v.muted = isGlobalMuted;
             v.setAttribute('playsinline', '');
-            v.setAttribute('preload', 'auto'); // إجبار المتصفح يجهز الفيديو
             v.src = `images/${id}.mp4`;
             
             v.oncanplay = () => v.classList.add('loaded');
