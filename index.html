@@ -19,7 +19,7 @@
             font-family: 'Cairo', sans-serif; 
             overflow: hidden; 
             color: #fff; 
-            height: 100vh; height: 100dvh; /* للأيفون الحديث */
+            height: 100vh; height: 100dvh;
         }
 
         .svg-heart { width: 100%; height: 100%; fill: currentColor; }
@@ -47,21 +47,17 @@
         }
         .h-pink .svg-heart { position: absolute; bottom: 0; left: 0; height: 80px; width: 80px; }
 
-        /* --- حاوية الستوري (الضبط الخاص بالسكرول) --- */
+        /* --- الستوري --- */
         .story-container {
-            width: 100vw; 
-            height: 100vh; height: 100dvh;
-            overflow-y: scroll; 
-            scroll-snap-type: y mandatory; /* إجبار التوقف */
-            scroll-behavior: smooth;
+            width: 100vw; height: 100vh; height: 100dvh;
+            overflow-y: scroll; scroll-snap-type: y mandatory; scroll-behavior: smooth;
             -webkit-overflow-scrolling: touch;
         }
         
         .slide {
-            width: 100vw; 
-            height: 100vh; height: 100dvh;
+            width: 100vw; height: 100vh; height: 100dvh;
             scroll-snap-align: start; 
-            scroll-snap-stop: always; /* <--- دي اللي بتمنع السكرول يجري */
+            scroll-snap-stop: always; /* يقلب واحدة بواحدة */
             position: relative; 
             overflow: hidden; display: flex; justify-content: center; align-items: center;
             background: #000;
@@ -73,9 +69,10 @@
         }
         .slide-media.loaded { opacity: 1; }
 
+        /* إخفاء زر التشغيل نهائياً */
         .play-overlay { display: none !important; }
 
-        /* تدرج لوني مريح للعين */
+        /* تدرج لوني مريح */
         .overlay-gradient {
             position: absolute; bottom: 0; left: 0; width: 100%; height: 75%;
             background: linear-gradient(to top, rgba(0,0,0,0.9) 15%, rgba(0,0,0,0.5) 50%, transparent 100%); 
@@ -180,7 +177,7 @@
     <div class="story-container" id="stories"></div>
 
     <script>
-        // الوصف الموحد لجميع الصور
+        // الوصف الموحد
         const unifiedDescription = "best memories with my fav person";
         
         const totalSlides = 82; 
@@ -193,7 +190,6 @@
             
             div.innerHTML = `
                 <div class="media-placeholder" id="media-container-${i}" style="width:100%; height:100%;"></div>
-                <div class="play-overlay"></div>
                 <div class="overlay-gradient"></div>
                 <div class="slide-content">
                     <h2>Memory ${i}</h2>
@@ -288,7 +284,7 @@
                     }
                 }
             });
-        }, { rootMargin: "0px", threshold: 0.5 }); // تعديل حساسية السكرول
+        }, { rootMargin: "0px", threshold: 0.5 });
 
         function startRain(container) {
             if (rainInterval) return; 
