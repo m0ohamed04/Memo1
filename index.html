@@ -87,8 +87,6 @@
     <script>
         const totalSlides = 82;
         const container = document.getElementById('stories');
-        // متغير للتحكم في الصوت بشكل عام
-        let globalMuted = true;
 
         for (let i = 1; i <= totalSlides; i++) {
             const div = document.createElement('div');
@@ -162,27 +160,12 @@
                     const id = parseInt(idStr);
                     
                     if (!isNaN(id)) {
-                        loadMedia(id); 
-                        if (id < totalSlides) loadMedia(id + 1); 
+                        loadMedia(id); // تحميل الفيديو الحالي
+                        if (id < totalSlides) loadMedia(id + 1); // تحميل الفيديو القادم مسبقاً (Preload)
                     }
 
                     const v = entry.target.querySelector('video');
-                    if (v) {
-                        // تطبيق حالة الصوت الحالية
-                        v.muted = globalMuted;
-                        // محاولة التشغيل
-                        var playPromise = v.play();
-                        if (playPromise !== undefined) {
-                            playPromise.catch(error => {
-                                // لو فشل التشغيل بالصوت (بسبب قيود المتصفح)، شغله صامت
-                                if (!globalMuted) {
-                                    console.log("Autoplay with sound blocked, reverting to muted.");
-                                    v.muted = true;
-                                    v.play();
-                                }
-                            });
-                        }
-                    }
+                    if (v) v.play().catch(() => {});
                 } else {
                     entry.target.classList.remove('active');
                     const v = entry.target.querySelector('video');
@@ -198,10 +181,9 @@
             const v = document.createElement('video');
             v.className = 'slide-media';
             v.loop = true; 
-            // يبدأ صامت دائماً لتسريع التحميل حتى يتم التفاعل
             v.muted = true; 
             v.setAttribute('playsinline', '');
-            v.setAttribute('preload', 'auto'); 
+            v.setAttribute('preload', 'auto'); // أمر التحميل الفوري
             v.src = `images/${id}.mp4`;
             
             v.oncanplay = () => v.classList.add('loaded');
@@ -217,15 +199,8 @@
             box.appendChild(v);
             
             const slide = box.closest('.slide');
-            
-            // تعديل الضغط لتفعيل الصوت للكل
             slide.onclick = (e) => { 
                 if (e.target.closest('.floating-heart')) return;
-                
-                // المستخدم ضغط، إذن نلغي الكتم العام
-                globalMuted = false;
-                
-                // إلغاء كتم الفيديو الحالي فوراً
                 if(v) v.muted = false; 
             };
         }
